@@ -12,4 +12,4 @@ You can find a small example dataset for your project in [data/examples](https:/
 
 #### Real data
 
-You will need to download real data for your project. You can find the Pan-Cancer mutation counts originally used by Alexandrov, et al. (Nature, 2013) at [ftp://ftp.sanger.ac.uk/pub/cancer/AlexandrovEtAl](ftp://ftp.sanger.ac.uk/pub/cancer/AlexandrovEtAl).
+You will need to download real data for your project and process it into the same format as the example data. You can find the Pan-Cancer mutation counts originally used by Alexandrov, et al. (Nature, 2013) at [ftp://ftp.sanger.ac.uk/pub/cancer/AlexandrovEtAl](ftp://ftp.sanger.ac.uk/pub/cancer/AlexandrovEtAl).
