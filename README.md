@@ -1,4 +1,4 @@
-# Project1a: Mutation Signatures
+# Project 1a: Mutation Signatures
 
 For this project, you will implement and run the NMF mutation signature decomposition described in [Alexandrov, et al. (Cell Reports, 2013)](https://www.nature.com/nature/journal/v500/n7463/full/nature12477.html) on the data from [Alexandrov, et al. (Nature, 2013)](http://www.cell.com/cell-reports/abstract/S2211-1247(12)00433-0).
 
