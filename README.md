@@ -14,4 +14,4 @@ You can find a small example dataset for your project in [data/examples](https:/
 
 You will need to download real data for your project and process it into the same format as the example data. You can find the Pan-Cancer mutation counts originally used by Alexandrov, et al. (Nature, 2013) at [ftp://ftp.sanger.ac.uk/pub/cancer/AlexandrovEtAl](ftp://ftp.sanger.ac.uk/pub/cancer/AlexandrovEtAl).
 
-Once you have inferred the 27 signatures on real data, please compare them to the signatures from [Alexandrov, et al. (Nature, 2013)](ftp://ftp.sanger.ac.uk/pub/cancer/AlexandrovEtAl/signatures.txt) by making a cosine similarity matrix (x-axis: your predicted signatures; y-axis: Alexandrov, et al. predicted signatures).
+Once you have inferred the 27 signatures on real data, please compare them to the signatures from Alexandrov, et al. (Nature, 2013) (ftp://ftp.sanger.ac.uk/pub/cancer/AlexandrovEtAl/signatures.txt) by making a cosine similarity matrix (x-axis: your predicted signatures; y-axis: Alexandrov, et al. predicted signatures).
