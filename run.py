@@ -3,14 +3,12 @@ import os
 from sklearn.decomposition import NMF
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
-from sklearn.metrics.pairwise import pairwise_distances, cosine_similarity
+from sklearn.metrics.pairwise import cosine_similarity
+from scipy.optimize import nnls
 
 import matplotlib.pyplot as plt
 
-# load the example signatures
-# example_signatures = np.load("data/examples/example-signatures.npy")
-# calculated_signatures = np.load("data/examples/calculated-signatures.npy")
-
+# run kmeans on X for N clusters
 def run_kmeans(X, N):
     kmeans = KMeans(n_clusters=N)
     kmeans.fit_predict(X)
@@ -32,31 +30,43 @@ def reduce_dimension(M):
 # for a given n, the number of signatures, calculate the signatures from M
 def calculate_signatures(N, M):
     # M is a numpy matrix where rows represent samples and columns represent mutation categories
-    cols_to_keep = reduce_dimension(M)
-    M = M[:, cols_to_keep]
-    # approach - find the min column, update the cumulative sum and if less than .01, remove, update and repeat
-    E_list = [] # exposure_matrix_list
+    # cols_to_keep = reduce_dimension(M)
+    # M = M[:, cols_to_keep]
+    silhouette_score_list = []
+    reconstruction_error = []
+    G, K = M.shape
     P_list = [] # signature_matrix_list
     # For I iterations (usually 400 < I < 500)
     num_iterations = 0
-    while num_iterations < 401:
-        # print(num_iterations)
-        E, P = run_iteration(N, M)
-        E_list.append(E)
+    while num_iterations < 1001:
+        print(num_iterations)
+        P = run_iteration(N, M)
         P_list.append(P)
         num_iterations = num_iterations + 1
-        # if (num_iterations % 10 == 0):
-        #     # calculate the iteration averaged matrix and see if it has converged
-        #     P = np.concatenate(P_list, axis=0)
-        #     # run k-means clustering on all signatures
-        #     P_kmeans = run_kmeans(P, N)
-        #     # kmeans.cluster_centers_ returns the centers of the clusters
-        #     # kmeans.labels_ returns the cluster that each point belongs to
-        #     s_score = silhouette_score(X=P, labels=P_kmeans.labels_, metric='cosine')
-        #     # print(s_score)
-        #     # TODO calculate reconstruction_error
-    E = np.concatenate(E_list, axis=0)
-    E_kmeans = run_kmeans(E, N)
+        if (num_iterations % 10 == 0):
+            # calculate the iteration averaged matrix and see if it has converged
+            P = np.concatenate(P_list, axis=0)
+            # run k-means clustering on all signatures
+            P_kmeans = run_kmeans(P, N)
+            # P_kmeans.cluster_centers_ returns the centers of the clusters
+            # kmeans.labels_ returns the cluster that each point belongs to
+            s_score = silhouette_score(X=P, labels=P_kmeans.labels_, metric='cosine')
+            silhouette_score_list.append(s_score)
+            print("silhouette score: " + str(s_score))
+            # calculate Frobenius reconstruction errors
+            error = 0
+            # E_list = [] # exposure_matrix_list
+            # given the set of N signatures, estimate the exposure to each for each sample
+            for sample in range(0, G):
+                _, rnorm = nnls(P_kmeans.cluster_centers_.transpose(), M[sample, :].transpose())
+                error += rnorm
+            reconstruction_error.append(error)
+            print("Frobenius reconstruction error: " + str(error))
+
+    with open("output/10_5_17/metrics/silhouette_score.txt", "w") as output:
+        output.write(str(silhouette_score_list))
+    with open("output/10_5_17/metrics/reconstruction_error.txt", "w") as output:
+        output.write(str(reconstruction_error))
     P = np.concatenate(P_list, axis=0)
     P_kmeans = run_kmeans(P, N)
     return P_kmeans.cluster_centers_
@@ -68,9 +78,9 @@ def run_iteration(N, M):
     M_prime = M[rows_to_keep,]
     # run NMF until convergence (10,000 runs without change) or until reach max num runs (1,000,000 total runs)
     model = NMF(n_components=N, init='random', solver='mu', max_iter=1000000)
-    W = model.fit_transform(M)
+    W = model.fit_transform(M_prime)
     H = model.components_
-    return W,H
+    return H
 
 def run_synthetic_data():
     # TODO - loop through multiple values of N
@@ -123,34 +133,9 @@ def run_real_data():
         print(N)
         M = get_real_data()
         signatures = calculate_signatures(N, M)
-        np.save("output/9_29_17/signatures/real-data-signatures-" + str(N) + ".npy", signatures)
-
-def analyze_signatures():
-    N_list = list(range(27, 28))
-    for N in N_list:
-        print("when N == " + str(N))
-        # get the names of the mutation categories for the calculated signatures
-        cal_sig_mut_categories = np.loadtxt("data/whole_exome/ALL_exomes_mutational_catalog_96_subs.txt", dtype=str, skiprows=1, usecols=list(range(0,1)))
-        calculated_signatures = np.load("output/9_28_17/signatures/calculated-signatures-" + str(N) + ".npy")
-        cosmic_signatures = np.loadtxt("data/signatures/signatures.txt", dtype=np.dtype(np.float32), delimiter="\t", skiprows=1, usecols=list(range(3,30)))
-        cosmic_signatures = cosmic_signatures.transpose()
-        cos_sig_mut_categories = np.loadtxt("data/signatures/signatures.txt", dtype=str, delimiter="\t", skiprows=1, usecols=list(range(2,3)))
-        # for each mutation category in the calculated signature, we want to get that column in the cosmic signatures
-        l = list()
-        for cal_sig_mut_cat in cal_sig_mut_categories:
-            # add the column to the list
-            l.append(cosmic_signatures[:, cos_sig_mut_categories == cal_sig_mut_cat])
-        cosmic_signatures = np.concatenate(l, axis=1)
-        # print(pairwise_distances(calculated_signatures, cosmic_signatures, metric='cosine'))
-        M = cosine_similarity(calculated_signatures, cosmic_signatures)
-        T = range(M.shape[0])
-        for i in range(M.shape[1]):
-            plt.plot(T, M[:,i])
-        plt.show()
+        np.save("output/10_5_17/signatures/real-data-signatures-" + str(N) + ".npy", signatures)
 
 
 if __name__ == '__main__':
     # run_synthetic_data()
-    # run_real_data()
-
-    analyze_signatures()
+    run_real_data()
